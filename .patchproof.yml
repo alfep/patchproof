@@ -1,0 +1,11 @@
+maxDiffLines: 1000
+maxFilesChanged: 20
+blockedPaths:
+  - ".env"
+  - "secrets/"
+  - "*.pem"
+  - "*.key"
+blockedCommands:
+  - "rm -rf"
+  - "curl"
+  - "wget"

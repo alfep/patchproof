@@ -1,0 +1,9 @@
+{
+  "id": "sample-pr-12",
+  "title": "Broken PR #12 — fix discount math for checkout",
+  "author": "intern-bot",
+  "description": "Intended to apply percent-off coupons correctly. Introduces a critical formula bug and weak validation.",
+  "baseRef": "main",
+  "headRef": "fix/discount-math",
+  "stack": "javascript"
+}

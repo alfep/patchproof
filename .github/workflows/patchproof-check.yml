@@ -1,0 +1,27 @@
+name: PatchProof Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  patchproof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run PatchProof
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD > pr.diff
+          node src/cli.js --diff pr.diff --sarif > patchproof-results.sarif || true
+
+      - name: Upload SARIF report
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: patchproof-results.sarif
