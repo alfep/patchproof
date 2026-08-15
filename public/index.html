@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PR Autopsy — Repro-First Gate</title>
+    <title>PatchProof — Repro-First PR Gate</title>
     <meta
       name="description"
       content="Prove PR risk with verification, not opinions. Repro-first code review gate."
@@ -19,8 +19,8 @@
         <div class="brand">
           <span class="mark" aria-hidden="true">⌀</span>
           <div>
-            <strong>PR Autopsy</strong>
-            <span class="tag">Repro-First Gate</span>
+            <strong>PatchProof</strong>
+            <span class="tag">Repro-First PR Gate</span>
           </div>
         </div>
         <div class="status-chips" id="statusChips">
@@ -32,7 +32,7 @@
         Don’t ask AI to “review” a PR — make it <em>prove</em> risk with
         verification, then ship a patch trail.
       </p>
-      <div class="pipeline" aria-label="Autopsy pipeline">
+      <div class="pipeline" aria-label="PatchProof pipeline">
         <span>Parse</span>
         <span class="sep">→</span>
         <span>Triage</span>
@@ -48,7 +48,7 @@
     <main class="layout">
       <section class="panel input-panel">
         <div class="panel-title-row">
-          <h2>Run an autopsy</h2>
+          <h2>Run a proof check</h2>
           <kbd class="hotkey" title="Focus run">↵ demo</kbd>
         </div>
 
@@ -109,7 +109,7 @@
 
         <div class="actions">
           <button type="button" id="runBtn" class="primary">
-            <span class="btn-label">Run repro-first autopsy</span>
+            <span class="btn-label">Run repro-first proof check</span>
             <span class="btn-spinner hidden" aria-hidden="true"></span>
           </button>
           <div class="toggles">
@@ -126,7 +126,6 @@
         <p class="hint llm-hint">
           OpenAI is <strong>optional</strong>. Core gate stays offline. Set
           <code>OPENAI_API_KEY</code> to polish claim wording (does not invent findings).
-          Runtime LLM ≠ Grok — see docs.
         </p>
         <p id="error" class="error hidden" role="alert"></p>
       </section>
@@ -148,7 +147,7 @@
         </div>
 
         <div id="running" class="hidden">
-          <h2>Autopsy in progress</h2>
+          <h2>Proof check in progress</h2>
           <div class="progress-track" id="progressTrack" aria-hidden="true">
             <div class="progress-fill" id="progressFill"></div>
           </div>
@@ -177,11 +176,8 @@
     </main>
 
     <footer class="foot">
-      <span>OpenAI Build Week · Developer Tools</span>
-      <span
-        >Build with Codex · Product triage story: GPT-5.6 · Demo engine: offline
-        repro-first</span
-      >
+      <span>PatchProof · MIT licensed</span>
+      <span>Demo engine: offline repro-first · LLM polish optional</span>
     </footer>
     <script src="/app.js" type="module"></script>
   </body>

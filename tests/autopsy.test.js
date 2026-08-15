@@ -1,12 +1,13 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseUnifiedDiff, parseGithubPrUrl } from "../src/parse-diff.js";
 import { analyzeDiff } from "../src/analyze.js";
 import { computeRisk, reportToMarkdown, reportToSarif } from "../src/findings.js";
-import { checkPolicy } from "../src/policy.js";
+import { checkPolicy, loadPolicy } from "../src/policy.js";
 import { runAutopsy } from "../src/autopsy.js";
 import { getLlmStatus } from "../src/llm.js";
 
@@ -82,7 +83,9 @@ describe("runAutopsy sample path (real entry)", () => {
     assert.ok(["HIGH", "CRITICAL"].includes(report.risk.label));
     assert.ok(report.risk.score >= 45);
     assert.match(report.risk.summary, /verified fail/i);
-    assert.match(report.markdown, /PR Autopsy Report/);
+    assert.ok(report.policy, "report should carry policy result");
+    assert.equal(report.policy.valid, true);
+    assert.match(report.markdown, /PatchProof Report/);
     assert.match(report.markdown, /Suggested patch/);
   });
 });
@@ -171,5 +174,65 @@ describe("checkPolicy", () => {
       blockedCommands: [],
     });
     assert.equal(res.valid, true);
+  });
+
+  it("matches glob patterns anchored (*.pem hits keys.pem, not pem.md)", () => {
+    const policy = {
+      maxDiffLines: 1000,
+      maxFilesChanged: 20,
+      blockedPaths: ["*.pem", "secrets/"],
+      blockedCommands: [],
+    };
+    const hit = checkPolicy("diff --git a/keys.pem b/keys.pem\n+x", policy);
+    assert.equal(hit.valid, false);
+    const miss = checkPolicy("diff --git a/pem.md b/pem.md\n+x", policy);
+    assert.equal(miss.valid, true);
+    const dirHit = checkPolicy("diff --git a/secrets/prod.json b/secrets/prod.json\n+x", policy);
+    assert.equal(dirHit.valid, false);
+  });
+
+  it("flags blocked commands in added lines", () => {
+    const diff = [
+      "diff --git a/deploy.sh b/deploy.sh",
+      "--- a/deploy.sh",
+      "+++ b/deploy.sh",
+      "@@ -1,1 +1,2 @@",
+      " echo deploy",
+      "+rm -rf /",
+    ].join("\n");
+    const res = checkPolicy(diff, {
+      maxDiffLines: 1000,
+      maxFilesChanged: 20,
+      blockedPaths: [],
+      blockedCommands: ["rm -rf"],
+    });
+    assert.equal(res.valid, false);
+    assert.ok(res.violations.some((v) => v.includes("rm -rf")));
+  });
+});
+
+describe("loadPolicy", () => {
+  it("parses .patchproof.yml lists and scalars", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "patchproof-policy-"));
+    await fs.writeFile(
+      path.join(dir, ".patchproof.yml"),
+      [
+        "maxDiffLines: 50",
+        "maxFilesChanged: 3",
+        "blockedPaths:",
+        '  - ".env"',
+        '  - "*.pem"',
+        "blockedCommands:",
+        '  - "rm -rf"',
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+    const policy = await loadPolicy(dir);
+    assert.equal(policy.maxDiffLines, 50);
+    assert.equal(policy.maxFilesChanged, 3);
+    assert.deepEqual(policy.blockedPaths, [".env", "*.pem"]);
+    assert.deepEqual(policy.blockedCommands, ["rm -rf"]);
+    await fs.rm(dir, { recursive: true, force: true });
   });
 });

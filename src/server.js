@@ -35,10 +35,16 @@ function sendJson(res, status, obj) {
 }
 
 async function serveStatic(req, res) {
-  let urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
+  let urlPath;
+  try {
+    urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
+  } catch {
+    res.writeHead(400).end("Bad request");
+    return;
+  }
   if (urlPath === "/") urlPath = "/index.html";
   const filePath = path.normalize(path.join(PUBLIC, urlPath));
-  if (!filePath.startsWith(PUBLIC)) {
+  if (filePath !== PUBLIC && !filePath.startsWith(PUBLIC + path.sep)) {
     res.writeHead(403).end("Forbidden");
     return;
   }
@@ -57,7 +63,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && req.url === "/api/health") {
       return sendJson(res, 200, {
         ok: true,
-        name: "pr-autopsy",
+        name: "patchproof",
         version: "0.1.0",
         llm: getLlmStatus(),
       });
@@ -93,7 +99,8 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "GET") {
-      return serveStatic(req, res);
+      await serveStatic(req, res);
+      return;
     }
 
     res.writeHead(405).end("Method not allowed");
@@ -103,6 +110,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`PR Autopsy Repro-First Gate → http://localhost:${PORT}`);
+  console.log(`PatchProof — Repro-First PR Gate → http://localhost:${PORT}`);
   console.log(`Sample path: open UI and click "Broken PR #12"`);
 });

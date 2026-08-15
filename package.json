@@ -1,5 +1,5 @@
 {
-  "name": "patchproof",
+  "name": "@alfep/patchproof",
   "version": "0.1.0",
   "description": "PatchProof: local-first repro-first PR gate — prove PR risk with verification, not opinions",
   "type": "module",

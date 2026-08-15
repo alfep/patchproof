@@ -70,7 +70,7 @@ export function computeRisk(findings) {
  */
 export function reportToMarkdown(report) {
   const lines = [];
-  lines.push(`# PR Autopsy Report`);
+  lines.push(`# PatchProof Report`);
   lines.push("");
   lines.push(`**Source:** ${report.sourceLabel}`);
   lines.push(`**Title:** ${report.title}`);
@@ -174,7 +174,7 @@ export function reportToSarif(report) {
         tool: {
           driver: {
             name: "PatchProof",
-            informationUri: "https://github.com/patchproof/patchproof",
+            informationUri: "https://github.com/alfep/patchproof",
             version: "0.1.0",
             rules,
           },

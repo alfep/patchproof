@@ -17,6 +17,7 @@ Options:
   --json            Print full JSON report
   --sarif           Print SARIF format (for GitHub Security)
   --no-execute      Analyze only; do not run repro scripts
+  --no-llm          Skip optional LLM claim enrichment
   -h, --help        Show help
 `);
 }
@@ -29,6 +30,7 @@ function parseArgs(argv) {
     json: false,
     sarif: false,
     execute: true,
+    useLlm: true,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -36,6 +38,7 @@ function parseArgs(argv) {
     else if (a === "--json") opts.json = true;
     else if (a === "--sarif") opts.sarif = true;
     else if (a === "--no-execute") opts.execute = false;
+    else if (a === "--no-llm") opts.useLlm = false;
     else if (a === "--diff") {
       opts.source = "diff";
       opts.diffPath = argv[++i];
@@ -69,6 +72,7 @@ async function main() {
     diffText,
     githubUrl: opts.githubUrl,
     execute: opts.execute,
+    useLlm: opts.useLlm,
     onProgress: (step, detail) => {
       if (!opts.json && !opts.sarif) console.error(`[${step}] ${detail || ""}`);
     },
@@ -84,7 +88,8 @@ async function main() {
   }
 
   const hasFail = report.findings.some((f) => f.status === "ran-fail");
-  process.exit(hasFail ? 2 : 0);
+  const policyBlocked = report.policy && !report.policy.valid;
+  process.exit(hasFail || policyBlocked ? 2 : 0);
 }
 
 main().catch((err) => {

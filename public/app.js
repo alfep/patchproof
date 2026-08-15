@@ -84,7 +84,7 @@ function setStage(stage) {
 function setBusy(busy) {
   runBtn.disabled = busy;
   btnSpinner.classList.toggle("hidden", !busy);
-  btnLabel.textContent = busy ? "Running…" : "Run repro-first autopsy";
+  btnLabel.textContent = busy ? "Running…" : "Run repro-first proof check";
 }
 
 function renderProgress(items) {
@@ -176,7 +176,7 @@ async function runAutopsyUi() {
   copyStatus.textContent = "";
   setStage("running");
   progressFill.style.width = "8%";
-  renderProgress([{ step: "queued", detail: "Sending autopsy request" }]);
+  renderProgress([{ step: "queued", detail: "Sending proof-check request" }]);
   setBusy(true);
 
   const body = {
@@ -219,7 +219,7 @@ copyBtn.addEventListener("click", async () => {
   }
 });
 
-// Demo-friendly: Ctrl/Cmd+Enter runs sample autopsy from anywhere
+// Demo-friendly: Ctrl/Cmd+Enter runs the sample proof check from anywhere
 document.addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
     e.preventDefault();

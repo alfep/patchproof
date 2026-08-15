@@ -18,7 +18,7 @@ export async function runVerifications(findings, ctx = {}) {
   const execute = ctx.execute !== false;
   const workspaceDir =
     ctx.workspaceDir ||
-    (await fs.mkdtemp(path.join(os.tmpdir(), "pr-autopsy-")));
+    (await fs.mkdtemp(path.join(os.tmpdir(), "patchproof-")));
 
   const out = [];
   for (const finding of findings) {

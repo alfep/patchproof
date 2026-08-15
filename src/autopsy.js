@@ -1,11 +1,15 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { analyzeDiff } from "./analyze.js";
 import { computeRisk, reportToMarkdown } from "./findings.js";
 import { enrichFindingsWithLlm, getLlmStatus } from "./llm.js";
+import { checkPolicy, loadPolicy } from "./policy.js";
 import { getSampleFixturePaths, runVerifications } from "./runner.js";
 import { parseGithubPrUrl } from "./parse-diff.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * @typedef {'sample'|'diff'|'github'} AutopsySource
@@ -18,6 +22,8 @@ import { parseGithubPrUrl } from "./parse-diff.js";
  * @param {string} [options.diffText]
  * @param {string} [options.githubUrl]
  * @param {boolean} [options.execute]
+ * @param {boolean} [options.useLlm]
+ * @param {string} [options.policyDir] - directory holding .patchproof.yml (defaults to repo root)
  * @param {(step: string, detail?: string) => void} [options.onProgress]
  */
 export async function runAutopsy(options) {
@@ -32,7 +38,7 @@ export async function runAutopsy(options) {
   let sourceId = "diff";
   /** @type {{ path: string, content: string }[]} */
   let headFiles = [];
-  let workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "pr-autopsy-ws-"));
+  let workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "patchproof-ws-"));
 
   if (options.source === "sample") {
     const fix = getSampleFixturePaths();
@@ -60,7 +66,7 @@ export async function runAutopsy(options) {
     const res = await fetch(api, {
       headers: {
         Accept: "application/vnd.github+json",
-        "User-Agent": "pr-autopsy-repro-first-gate",
+        "User-Agent": "patchproof-repro-first-gate",
         ...(process.env.GITHUB_TOKEN
           ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
           : {}),
@@ -79,7 +85,7 @@ export async function runAutopsy(options) {
     const diffRes = await fetch(pr.diff_url || `${api}.diff`, {
       headers: {
         Accept: "application/vnd.github.v3.diff",
-        "User-Agent": "pr-autopsy-repro-first-gate",
+        "User-Agent": "patchproof-repro-first-gate",
         ...(process.env.GITHUB_TOKEN
           ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
           : {}),
@@ -94,6 +100,16 @@ export async function runAutopsy(options) {
       throw new Error("diffText is required when source is 'diff'");
     }
     sourceLabel = "pasted-diff";
+  }
+
+  onProgress("policy", "Checking .patchproof.yml policy");
+  const policyDir = options.policyDir || path.resolve(__dirname, "..");
+  const policy = await loadPolicy(policyDir);
+  const policyResult = checkPolicy(diffText, policy);
+  if (!policyResult.valid) {
+    for (const v of policyResult.violations) onProgress("policy", `violation: ${v}`);
+  } else {
+    onProgress("policy", "policy ok");
   }
 
   onProgress("analysis", "Triage risk regions in diff (offline engine)");
@@ -131,6 +147,10 @@ export async function runAutopsy(options) {
     title,
     findings,
     risk,
+    policy: {
+      valid: policyResult.valid,
+      violations: policyResult.violations,
+    },
     llm: llmMeta,
     engine: {
       core: "offline-repro-first",
@@ -138,6 +158,7 @@ export async function runAutopsy(options) {
     },
     stages: [
       "parsing",
+      "policy",
       "analysis",
       "llm_triage",
       "proposing_repros",

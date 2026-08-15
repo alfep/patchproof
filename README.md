@@ -33,7 +33,7 @@ Or launch the UI:
 ```bash
 npm start
 # open http://localhost:3847
-# click "Broken PR #12" -> Run repro-first autopsy
+# click "Broken PR #12" -> Run repro-first proof check
 ```
 
 Expected sample outcome:
@@ -60,11 +60,12 @@ node src/cli.js --github https://github.com/owner/repo/pull/123
 node src/cli.js --sample --json       # JSON report
 node src/cli.js --sample --sarif      # SARIF format (GitHub Security tab)
 node src/cli.js --sample --no-execute # analyze only
+node src/cli.js --sample --no-llm     # skip optional LLM enrichment
 ```
 
-Exit codes: `0` ok, `2` if any finding `ran-fail`, `1` error.
+Exit codes: `0` ok, `2` if any finding `ran-fail` or the diff violates `.patchproof.yml` policy, `1` error.
 
-## GitHub Action Integration
+## CI Integration (copy-paste workflow)
 
 Add `.github/workflows/patchproof-check.yml`:
 
@@ -96,7 +97,12 @@ blockedPaths:
   - ".env"
   - "secrets/"
   - "*.pem"
+blockedCommands:
+  - "rm -rf"
+  - "curl"
 ```
+
+The policy is checked on every run (CLI, server, CI). Violations are listed in the report and fail the gate (exit code `2`). `blockedPaths` supports `*` within a path segment and trailing `/` for directory prefixes; `blockedCommands` flags added lines that contain the given command.
 
 ## API
 
@@ -117,7 +123,11 @@ Optional env: `GITHUB_TOKEN`, `PORT` (default `3847`).
 npm test
 ```
 
-Tests drive the **real** `runAutopsy({ source: "sample" })` path and assert verified fail + patch + risk.
+Tests drive the **real** `runAutopsy({ source: "sample" })` path and assert verified fail + patch + risk + policy.
+
+## Design
+
+See [DESIGN.md](DESIGN.md) for the repro-first model, risk scoring, and sandbox architecture.
 
 ## License
 

@@ -1,9 +1,8 @@
 /**
  * Optional OpenAI enrichment for finding prose (triage story).
  *
- * - Default / judges: offline heuristic engine only (no key required).
+ * - Default: offline heuristic engine only (no key required).
  * - With OPENAI_API_KEY: rewrite claim/title wording for clarity (does not invent findings).
- * - Grok (this coding session) is NOT the runtime model — OpenAI API is, if configured.
  */
 
 /**
@@ -14,7 +13,7 @@
  */
 export function getLlmStatus() {
   const key = process.env.OPENAI_API_KEY || "";
-  const model = process.env.OPENAI_MODEL || "gpt-5.6";
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const baseUrl = (
     process.env.OPENAI_BASE_URL || "https://api.openai.com/v1"
   ).replace(/\/$/, "");
@@ -67,7 +66,7 @@ export async function enrichFindingsWithLlm(findings, ctx) {
         {
           role: "system",
           content:
-            "You are the triage layer of PR Autopsy (Repro-First Gate). " +
+            "You are the triage layer of PatchProof (Repro-First PR Gate). " +
             "You ONLY rewrite title/claim/evidence for clarity. " +
             "Do not invent new findings. Do not remove verify steps. " +
             "Return JSON: { findings: [{ id, title, claim, evidence }] } matching input ids.",
