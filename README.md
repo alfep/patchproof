@@ -1,10 +1,25 @@
 # PatchProof — Local-First PR Gate for OSS Maintainers
 
+[![Tests](https://github.com/alfep/patchproof/actions/workflows/tests.yml/badge.svg)](https://github.com/alfep/patchproof/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+
 > Don't ask AI to "review" a PR — make it **prove** risk with verification, then attach a patch trail.
 
 Generic AI code review stops at opinions. **PatchProof** forces each serious finding into a **repro-first card**: claim → evidence in the diff → verify command → `ran-pass` / `ran-fail` → suggested patch.
 
 Runs locally in an isolated sandbox using Node's permission model. Zero Docker required.
+
+## Why PatchProof
+
+Maintainers are drowning in unverified claims — AI-generated PRs and reviews that assert problems without proving them. PatchProof inverts the burden of proof:
+
+- **Every finding must ship a verify command** that actually runs in a sandboxed worktree.
+- **`ran-pass` findings are downgraded** — if the repro passes, the claim was wrong or already fixed.
+- **Only `ran-fail` findings carry full weight**, with the evidence trail and a suggested patch attached.
+- **Deterministic offline core** — the analyzer needs zero API keys; LLM polish is optional and never invents findings.
+
+The result is a gate you can put in CI: PRs arrive with a machine-checkable proof trail instead of vibes.
 
 ## Quick start
 

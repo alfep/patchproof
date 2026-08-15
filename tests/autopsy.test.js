@@ -5,7 +5,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseUnifiedDiff, parseGithubPrUrl } from "../src/parse-diff.js";
 import { analyzeDiff } from "../src/analyze.js";
-import { computeRisk, reportToMarkdown } from "../src/findings.js";
+import { computeRisk, reportToMarkdown, reportToSarif } from "../src/findings.js";
+import { checkPolicy } from "../src/policy.js";
 import { runAutopsy } from "../src/autopsy.js";
 import { getLlmStatus } from "../src/llm.js";
 
@@ -120,5 +121,55 @@ describe("computeRisk + reportToMarkdown", () => {
       findings: [{ ...base, status: "ran-fail", runOutput: "FAIL" }],
     });
     assert.match(md, /ran-fail/);
+  });
+});
+
+describe("reportToSarif", () => {
+  it("generates valid SARIF structure", () => {
+    const report = {
+      findings: [
+        {
+          id: "f1",
+          kind: "discount-formula",
+          title: "Formula error",
+          severity: "critical",
+          claim: "Claim text",
+          evidence: "Evidence text",
+          file: "discount.js",
+          line: 10,
+          status: "ran-fail",
+        },
+      ],
+    };
+    const sarif = reportToSarif(report);
+    assert.equal(sarif.version, "2.1.0");
+    assert.equal(sarif.runs[0].tool.driver.name, "PatchProof");
+    assert.equal(sarif.runs[0].results.length, 1);
+    assert.equal(sarif.runs[0].results[0].level, "error");
+  });
+});
+
+describe("checkPolicy", () => {
+  it("flags blocked paths in diff", () => {
+    const diff = "diff --git a/.env b/.env\n+SECRET=123";
+    const res = checkPolicy(diff, {
+      maxDiffLines: 1000,
+      maxFilesChanged: 20,
+      blockedPaths: [".env"],
+      blockedCommands: [],
+    });
+    assert.equal(res.valid, false);
+    assert.ok(res.violations.some((v) => v.includes(".env")));
+  });
+
+  it("passes clean diff", () => {
+    const diff = "diff --git a/app.js b/app.js\n+console.log('hi');";
+    const res = checkPolicy(diff, {
+      maxDiffLines: 1000,
+      maxFilesChanged: 20,
+      blockedPaths: [".env"],
+      blockedCommands: [],
+    });
+    assert.equal(res.valid, true);
   });
 });

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PR Autopsy — Repro-First Gate</title>
+    <meta
+      name="description"
+      content="Prove PR risk with verification, not opinions. Repro-first code review gate."
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="top-row">
+        <div class="brand">
+          <span class="mark" aria-hidden="true">⌀</span>
+          <div>
+            <strong>PR Autopsy</strong>
+            <span class="tag">Repro-First Gate</span>
+          </div>
+        </div>
+        <div class="status-chips" id="statusChips">
+          <span class="chip" id="engineChip">engine: offline</span>
+          <span class="chip muted" id="llmChip">llm: checking…</span>
+        </div>
+      </div>
+      <p class="pitch">
+        Don’t ask AI to “review” a PR — make it <em>prove</em> risk with
+        verification, then ship a patch trail.
+      </p>
+      <div class="pipeline" aria-label="Autopsy pipeline">
+        <span>Parse</span>
+        <span class="sep">→</span>
+        <span>Triage</span>
+        <span class="sep">→</span>
+        <span>Repro</span>
+        <span class="sep">→</span>
+        <span>Run</span>
+        <span class="sep">→</span>
+        <span>Patch</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel input-panel">
+        <div class="panel-title-row">
+          <h2>Run an autopsy</h2>
+          <kbd class="hotkey" title="Focus run">↵ demo</kbd>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Input source">
+          <button type="button" class="tab active" data-mode="sample" role="tab" aria-selected="true">
+            Broken PR #12
+          </button>
+          <button type="button" class="tab" data-mode="diff" role="tab" aria-selected="false">
+            Paste diff
+          </button>
+          <button type="button" class="tab" data-mode="github" role="tab" aria-selected="false">
+            GitHub URL
+          </button>
+        </div>
+
+        <div id="mode-sample" class="mode">
+          <div class="sample-card">
+            <div class="sample-card-top">
+              <span class="pr-badge">PR #12</span>
+              <span class="sev-pill">demo · always fails verify</span>
+            </div>
+            <h3>fix discount math for checkout</h3>
+            <p>
+              Head replaces <code>price * (1 - percentOff / 100)</code> with
+              <code>price - price * percentOff</code> and drops range checks.
+            </p>
+            <ul class="sample-bullets">
+              <li>Critical formula bug → negative cart total</li>
+              <li>Medium: missing percentOff validation</li>
+              <li>Offline fixture — no API key required</li>
+            </ul>
+          </div>
+        </div>
+
+        <div id="mode-diff" class="mode hidden">
+          <label for="diffText">Unified diff</label>
+          <textarea
+            id="diffText"
+            rows="11"
+            spellcheck="false"
+            placeholder="diff --git a/file.js b/file.js&#10;--- a/file.js&#10;+++ b/file.js&#10;@@ ..."
+          ></textarea>
+        </div>
+
+        <div id="mode-github" class="mode hidden">
+          <label for="githubUrl">Public GitHub pull request URL</label>
+          <input
+            id="githubUrl"
+            type="url"
+            autocomplete="off"
+            placeholder="https://github.com/owner/repo/pull/123"
+          />
+          <p class="hint">
+            Uses the GitHub API. Public PRs work without a token; set
+            <code>GITHUB_TOKEN</code> on the server for higher rate limits.
+          </p>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="runBtn" class="primary">
+            <span class="btn-label">Run repro-first autopsy</span>
+            <span class="btn-spinner hidden" aria-hidden="true"></span>
+          </button>
+          <div class="toggles">
+            <label class="check">
+              <input type="checkbox" id="execute" checked />
+              Execute verify scripts
+            </label>
+            <label class="check">
+              <input type="checkbox" id="useLlm" checked />
+              Optional OpenAI claim polish
+            </label>
+          </div>
+        </div>
+        <p class="hint llm-hint">
+          OpenAI is <strong>optional</strong>. Core gate stays offline. Set
+          <code>OPENAI_API_KEY</code> to polish claim wording (does not invent findings).
+          Runtime LLM ≠ Grok — see docs.
+        </p>
+        <p id="error" class="error hidden" role="alert"></p>
+      </section>
+
+      <section class="panel result-panel">
+        <div id="empty" class="empty">
+          <div class="empty-icon" aria-hidden="true">⌁</div>
+          <h2>Evidence over opinion</h2>
+          <ol class="steps-list">
+            <li><strong>Parse</strong> the diff</li>
+            <li><strong>Triage</strong> risk claims</li>
+            <li><strong>Propose</strong> repro steps</li>
+            <li><strong>Run</strong> what we can</li>
+            <li><strong>Attach</strong> a minimal patch</li>
+          </ol>
+          <p class="empty-cta">
+            Start with <strong>Broken PR #12</strong> for the 90-second demo path.
+          </p>
+        </div>
+
+        <div id="running" class="hidden">
+          <h2>Autopsy in progress</h2>
+          <div class="progress-track" id="progressTrack" aria-hidden="true">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <ul id="progress" class="progress"></ul>
+        </div>
+
+        <div id="report" class="hidden">
+          <div class="report-head">
+            <div>
+              <p class="eyebrow" id="sourceLabel"></p>
+              <h2 id="reportTitle"></h2>
+            </div>
+            <div id="riskBadge" class="risk"></div>
+          </div>
+          <p id="riskSummary" class="summary"></p>
+          <p id="llmNote" class="llm-note"></p>
+          <div class="stat-row" id="statRow"></div>
+          <div class="report-actions">
+            <button type="button" id="copyMd" class="ghost">Copy markdown report</button>
+            <button type="button" id="rerun" class="ghost">Run again</button>
+            <span id="copyStatus" class="copy-status" aria-live="polite"></span>
+          </div>
+          <div id="findings" class="findings"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>OpenAI Build Week · Developer Tools</span>
+      <span
+        >Build with Codex · Product triage story: GPT-5.6 · Demo engine: offline
+        repro-first</span
+      >
+    </footer>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

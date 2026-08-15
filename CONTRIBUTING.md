@@ -5,7 +5,7 @@ Thank you for your interest in contributing!
 ## Development Setup
 
 ```bash
-git clone https://github.com/patchproof/patchproof.git
+git clone https://github.com/alfep/patchproof.git
 cd patchproof
 npm install
 npm test
@@ -18,6 +18,8 @@ npm test
 - `src/runner.js`: Isolated repro execution runner using Node permission model.
 - `src/policy.js`: Policy enforcement engine.
 - `src/findings.js`: Finding model, risk scoring, Markdown & SARIF output.
+- `src/llm.js`: Optional LLM polish layer (never invents findings).
+- `src/server.js`: Local HTTP server + UI for the autopsy flow.
 - `src/cli.js`: CLI entry point.
 
 ## Rules
