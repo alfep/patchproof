@@ -159,9 +159,13 @@ process.exit(0);
  */
 function spawnCapture(cmd, args, opts) {
   return new Promise((resolve) => {
-    // Add Node permission flags for isolated execution without Docker
+    // Add Node permission flags for isolated execution without Docker.
+    // The permission model is `--experimental-permission` on Node 20 and the
+    // stable `--permission` flag from Node 22 onward.
+    const major = Number(process.versions.node.split(".")[0]);
+    const permFlag = major >= 22 ? "--permission" : "--experimental-permission";
     const permissionArgs = [
-      "--permission",
+      permFlag,
       `--allow-fs-read=${opts.cwd}`,
       `--allow-fs-write=${opts.cwd}`,
       ...args,

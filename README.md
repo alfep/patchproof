@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/alfep/patchproof/actions/workflows/tests.yml/badge.svg)](https://github.com/alfep/patchproof/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 
 > Don't ask AI to "review" a PR — make it **prove** risk with verification, then attach a patch trail.
 
@@ -24,7 +24,7 @@ The result is a gate you can put in CI: PRs arrive with a machine-checkable proo
 ## Quick start
 
 ```bash
-# Node 18+ (Node 22+ recommended for permission sandbox)
+# Node 20+ (Node 22+ recommended for the stable permission sandbox)
 node src/cli.js --sample
 ```
 
