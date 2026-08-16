@@ -127,6 +127,61 @@ describe("computeRisk + reportToMarkdown", () => {
   });
 });
 
+describe("reportToMarkdown policy section", () => {
+  const baseFinding = {
+    id: "x",
+    title: "t",
+    severity: "medium",
+    file: "f.js",
+    line: 1,
+    claim: "c",
+    evidence: "e",
+    verifyCommand: "echo ok",
+    suggestedPatch: null,
+    status: "skipped",
+  };
+
+  it("shows policy pass when valid", () => {
+    const md = reportToMarkdown({
+      sourceLabel: "test",
+      title: "T",
+      risk: computeRisk([baseFinding]),
+      findings: [baseFinding],
+      policy: { valid: true, violations: [] },
+    });
+    assert.match(md, /\*\*Policy:\*\* pass/);
+  });
+
+  it("lists violations when policy fails", () => {
+    const md = reportToMarkdown({
+      sourceLabel: "test",
+      title: "T",
+      risk: computeRisk([baseFinding]),
+      findings: [baseFinding],
+      policy: {
+        valid: false,
+        violations: [
+          "File matches blocked path policy (.env): .env",
+          "Diff exceeds maximum lines limit (1500 > 1000)",
+        ],
+      },
+    });
+    assert.match(md, /\*\*Policy:\*\* FAIL — 2/);
+    assert.match(md, /blocked path policy/);
+    assert.match(md, /maximum lines limit/);
+  });
+
+  it("omits policy section when report has no policy", () => {
+    const md = reportToMarkdown({
+      sourceLabel: "test",
+      title: "T",
+      risk: computeRisk([baseFinding]),
+      findings: [baseFinding],
+    });
+    assert.doesNotMatch(md, /\*\*Policy:\*\*/);
+  });
+});
+
 describe("reportToSarif", () => {
   it("generates valid SARIF structure", () => {
     const report = {
