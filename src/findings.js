@@ -77,6 +77,19 @@ export function reportToMarkdown(report) {
   lines.push(
     `**Risk:** ${report.risk.label} (${report.risk.score}/100) — ${report.risk.summary}`,
   );
+  if (report.policy) {
+    const p = report.policy;
+    if (p.valid) {
+      lines.push(`**Policy:** pass — no \`.patchproof.yml\` violations`);
+    } else {
+      lines.push(
+        `**Policy:** FAIL — ${p.violations.length} \`.patchproof.yml\` violation(s)`,
+      );
+      for (const v of p.violations) {
+        lines.push(`- ${v}`);
+      }
+    }
+  }
   lines.push("");
   lines.push(`## Findings`);
   lines.push("");
